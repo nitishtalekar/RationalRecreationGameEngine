@@ -1,0 +1,88 @@
+[
+  {
+    "id": "win-score-100",
+    "category": "win",
+    "status": "implemented",
+    "source": "paper",
+    "enabled": true,
+    "predicates": [
+      {
+        "description": "Y has component/tag _isVulnerable targeted by X",
+        "check": "hasComponentTag",
+        "subject": "Y",
+        "tag": "_isVulnerable",
+        "target": "X",
+        "trueScore": 4,
+        "falseScore": 0
+      }
+    ],
+    "modifications": [
+      { "type": "setBlackboard", "key": "removeToWin", "value": "$Y" },
+      {
+        "type": "removeComponentTag",
+        "owner": "Y",
+        "tag": "_isVulnerable",
+        "target": "X"
+      },
+      {
+        "type": "addComponent",
+        "owner": "Y",
+        "component": "_isRemovedBy",
+        "target": "X"
+      },
+      {
+        "type": "addComponent",
+        "owner": "Y",
+        "component": "ScoreRemovalOfComponent",
+        "params": { "winScore": 100, "scoreEachRemoval": 10 }
+      },
+      {
+        "type": "addComponent",
+        "owner": "Y",
+        "component": "RespawnOnRemoveComponent"
+      },
+      { "type": "setPlayer", "owner": "X" }
+    ],
+    "instruction": "Collect 100 points worth of {Y}."
+  },
+  {
+    "id": "win-remove-all-of-one-entity-type",
+    "category": "win",
+    "status": "reference-only",
+    "source": "paper",
+    "enabled": false,
+    "predicates": [],
+    "modifications": [],
+    "instruction": null
+  },
+  {
+    "id": "win-move-player-to-right-side",
+    "category": "win",
+    "status": "reference-only",
+    "source": "paper",
+    "enabled": false,
+    "predicates": [],
+    "modifications": [],
+    "instruction": null
+  },
+  {
+    "id": "win-survive-for-specified-time",
+    "category": "win",
+    "status": "reference-only",
+    "source": "paper",
+    "enabled": false,
+    "predicates": [],
+    "modifications": [],
+    "instruction": null
+  },
+  {
+    "id": "win-make-x-huge",
+    "category": "win",
+    "status": "reference-only",
+    "source": "paper",
+    "enabled": false,
+    "predicates": [],
+    "modifications": [],
+    "instruction": null
+  }
+]

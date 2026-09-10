@@ -1,0 +1,19 @@
+[
+  { "verb": "arrests", "enabled": true },
+  { "verb": "attacks", "enabled": false },
+  { "verb": "avoids", "enabled": true },
+  { "verb": "carries", "enabled": false },
+  { "verb": "collects", "enabled": false },
+  { "verb": "deflects", "enabled": false },
+  { "verb": "follows", "enabled": false },
+  { "verb": "gets", "enabled": false },
+  { "verb": "grows", "enabled": true },
+  { "verb": "harms", "enabled": true },
+  { "verb": "influences", "enabled": false },
+  { "verb": "makes", "enabled": false },
+  { "verb": "needs", "enabled": true },
+  { "verb": "obstructs", "enabled": true },
+  { "verb": "prevents", "enabled": false },
+  { "verb": "wastes", "enabled": false },
+  { "verb": "watches", "enabled": false }
+]

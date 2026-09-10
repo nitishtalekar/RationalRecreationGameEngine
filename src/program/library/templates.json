@@ -1,0 +1,35 @@
+[
+  {
+    "id": "occupy",
+    "name": "Occupy",
+    "source": "paper",
+    "status": "implemented",
+    "conceptMap": {
+      "nodes": [
+        { "id": "police", "label": "Police" },
+        { "id": "occupier", "label": "Occupier" },
+        { "id": "wall-street", "label": "Wall Street" }
+      ],
+      "edges": [
+        {
+          "id": "police-arrests-occupier",
+          "source": "police",
+          "target": "occupier",
+          "verb": "arrests"
+        },
+        {
+          "id": "occupier-obstructs-wall-street",
+          "source": "occupier",
+          "target": "wall-street",
+          "verb": "obstructs"
+        },
+        {
+          "id": "wall-street-grows-occupier",
+          "source": "wall-street",
+          "target": "occupier",
+          "verb": "grows"
+        }
+      ]
+    }
+  }
+]

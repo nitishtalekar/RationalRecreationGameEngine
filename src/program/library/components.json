@@ -1,0 +1,77 @@
+[
+  {
+    "type": "RemoveOnCollideComponent",
+    "tags": ["_isVulnerable", "_isRemovedBy"],
+    "source": "paper"
+  },
+  {
+    "type": "ShrinkOnCollideComponent",
+    "tags": ["_isVulnerable", "_isRemovedBy"],
+    "source": "paper"
+  },
+  {
+    "type": "StopOnCollideComponent",
+    "tags": ["_isVulnerable", "_isCollidable"],
+    "source": "paper"
+  },
+  {
+    "type": "ReflectOnCollideComponent",
+    "tags": ["_isCollidable"],
+    "source": "paper"
+  },
+  {
+    "type": "GrowOnCollideComponent",
+    "tags": ["_isCollidable"],
+    "source": "paper"
+  },
+  {
+    "type": "DestroyIfOffScreen",
+    "tags": [],
+    "source": "paper"
+  },
+  {
+    "type": "FollowBehind",
+    "tags": [],
+    "source": "paper"
+  },
+  {
+    "type": "MouseController",
+    "tags": [],
+    "source": "paper"
+  },
+  {
+    "type": "ChaseDownComponent",
+    "tags": [],
+    "source": "paper"
+  },
+  {
+    "type": "ScoreRemovalOfComponent",
+    "tags": [],
+    "source": "paper"
+  },
+  {
+    "type": "RespawnOnRemoveComponent",
+    "tags": [],
+    "source": "paper"
+  },
+  {
+    "type": "MeterComponent",
+    "tags": [],
+    "source": "paper"
+  },
+  {
+    "type": "ShrinkUnlessCollidingComponent",
+    "tags": [],
+    "source": "paper"
+  },
+  {
+    "type": "SpawnTowardTargetComponent",
+    "tags": [],
+    "source": "paper"
+  },
+  {
+    "type": "ShrinkOnSpawnCollisionComponent",
+    "tags": [],
+    "source": "paper"
+  }
+]

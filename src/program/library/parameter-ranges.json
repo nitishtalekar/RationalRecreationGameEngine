@@ -1,0 +1,17 @@
+{
+  "movementSpeed": {
+    "min": 80,
+    "max": 160,
+    "source": "runtime-default"
+  },
+  "entitySize": {
+    "min": 32,
+    "max": 72,
+    "source": "runtime-default"
+  },
+  "timerSeconds": {
+    "min": 30,
+    "max": 60,
+    "source": "runtime-default"
+  }
+}

@@ -1,0 +1,53 @@
+[
+  {
+    "id": "structure-frogger",
+    "category": "structure",
+    "status": "implemented",
+    "source": "paper",
+    "enabled": true,
+    "predicates": [],
+    "modifications": [
+      { "type": "placeEntity", "owner": "A", "position": "left" },
+      { "type": "placeEntity", "owner": "B", "position": "right" },
+      { "type": "scaleEntity", "owner": "B", "scale": 2 },
+      { "type": "multiplyEntity", "owner": "C", "position": "middle" },
+      {
+        "type": "restrictMovement",
+        "owner": "C",
+        "axis": "vertical",
+        "region": "bars"
+      }
+    ],
+    "instruction": null
+  },
+  {
+    "id": "structure-space-invaders",
+    "category": "structure",
+    "status": "reference-only",
+    "source": "paper",
+    "enabled": false,
+    "predicates": [],
+    "modifications": [],
+    "instruction": null
+  },
+  {
+    "id": "structure-kaboom",
+    "category": "structure",
+    "status": "reference-only",
+    "source": "paper",
+    "enabled": false,
+    "predicates": [],
+    "modifications": [],
+    "instruction": null
+  },
+  {
+    "id": "structure-asteroids",
+    "category": "structure",
+    "status": "reference-only",
+    "source": "paper",
+    "enabled": false,
+    "predicates": [],
+    "modifications": [],
+    "instruction": null
+  }
+]

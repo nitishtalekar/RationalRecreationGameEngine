@@ -1,0 +1,48 @@
+[
+  {
+    "id": "lose-run-out-of-time",
+    "category": "lose",
+    "status": "implemented",
+    "source": "paper",
+    "enabled": true,
+    "predicates": [],
+    "modifications": [
+      {
+        "type": "addComponent",
+        "owner": "WORLD",
+        "component": "MeterComponent"
+      }
+    ],
+    "instruction": "Lose when time runs out."
+  },
+  {
+    "id": "lose-run-out-of-lives",
+    "category": "lose",
+    "status": "reference-only",
+    "source": "paper",
+    "enabled": false,
+    "predicates": [],
+    "modifications": [],
+    "instruction": null
+  },
+  {
+    "id": "lose-fail-to-protect-one-entity-from-another",
+    "category": "lose",
+    "status": "reference-only",
+    "source": "paper",
+    "enabled": false,
+    "predicates": [],
+    "modifications": [],
+    "instruction": null
+  },
+  {
+    "id": "lose-fail-to-reach-high-score-within-specified-time",
+    "category": "lose",
+    "status": "reference-only",
+    "source": "paper",
+    "enabled": false,
+    "predicates": [],
+    "modifications": [],
+    "instruction": null
+  }
+]

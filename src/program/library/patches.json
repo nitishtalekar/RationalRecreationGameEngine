@@ -1,0 +1,14 @@
+[
+  {
+    "id": "everything-moves",
+    "source": "paper",
+    "status": "implemented",
+    "description": "Give a movement component to every entity that does not already have one.",
+    "precondition": "entity lacks any movement component",
+    "modification": {
+      "type": "addComponent",
+      "owner": "*",
+      "component": "_movesInAnyWay"
+    }
+  }
+]

@@ -1,0 +1,106 @@
+[
+  {
+    "id": "avoids-chased-and-vulnerable",
+    "verb": "avoids",
+    "source": "paper",
+    "status": "implemented",
+    "assignments": [
+      { "owner": "subject", "component": "_movesInAnyWay" },
+      { "owner": "predicate", "component": "_movesInAnyWay" },
+      {
+        "owner": "predicate",
+        "component": "ChaseDownComponent",
+        "params": { "evaderName": "$subject" }
+      },
+      {
+        "owner": "subject",
+        "target": "predicate",
+        "component": "_isVulnerable"
+      }
+    ]
+  },
+  {
+    "id": "needs-contact-or-shrink",
+    "verb": "needs",
+    "source": "paper",
+    "status": "implemented",
+    "assignments": [
+      {
+        "owner": "subject",
+        "target": "predicate",
+        "component": "ShrinkUnlessCollidingComponent"
+      }
+    ]
+  },
+  {
+    "id": "harms-projectile-shrink",
+    "verb": "harms",
+    "source": "paper",
+    "status": "implemented",
+    "assignments": [
+      {
+        "owner": "subject",
+        "target": "predicate",
+        "component": "SpawnTowardTargetComponent"
+      },
+      {
+        "owner": "predicate",
+        "component": "ShrinkOnSpawnCollisionComponent"
+      }
+    ]
+  },
+  {
+    "id": "arrests-take-custody",
+    "verb": "arrests",
+    "source": "paper",
+    "status": "implemented",
+    "assignments": [
+      { "owner": "subject", "component": "_movesInAnyWay" },
+      { "owner": "predicate", "component": "_movesInAnyWay" },
+      {
+        "owner": "predicate",
+        "target": "subject",
+        "component": "StopOnCollideComponent"
+      }
+    ]
+  },
+  {
+    "id": "obstructs-freeze",
+    "verb": "obstructs",
+    "source": "paper",
+    "status": "implemented",
+    "assignments": [
+      {
+        "owner": "predicate",
+        "target": "subject",
+        "component": "StopOnCollideComponent"
+      }
+    ]
+  },
+  {
+    "id": "obstructs-redirect",
+    "verb": "obstructs",
+    "source": "paper",
+    "status": "implemented",
+    "assignments": [
+      {
+        "owner": "predicate",
+        "target": "subject",
+        "component": "ReflectOnCollideComponent"
+      }
+    ]
+  },
+  {
+    "id": "grows-grow-on-collide",
+    "verb": "grows",
+    "source": "paper",
+    "status": "implemented",
+    "assignments": [
+      {
+        "owner": "predicate",
+        "target": "subject",
+        "component": "GrowOnCollideComponent"
+      }
+    ]
+  }
+]
