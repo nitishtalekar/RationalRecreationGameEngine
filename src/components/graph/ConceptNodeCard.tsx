@@ -4,6 +4,7 @@ import { useState, type KeyboardEvent } from "react";
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import { Box, IconButton, TextField } from "@radix-ui/themes";
 import { Cross2Icon } from "@radix-ui/react-icons";
+import { colorForEntityKey } from "@/program/entityColor";
 
 export type ConceptFlowNodeData = {
   label: string;
@@ -20,6 +21,7 @@ export default function ConceptNodeCard({
 }: NodeProps<ConceptFlowNode>) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(data.label);
+  const color = colorForEntityKey(id);
 
   function commit() {
     const trimmed = draft.trim();
@@ -52,9 +54,10 @@ export default function ConceptNodeCard({
         paddingRight: 22,
         borderRadius: "var(--radius-3)",
         background: "var(--gray-2)",
-        border: selected
-          ? "1.5px solid var(--accent-9)"
-          : "1px solid var(--gray-6)",
+        borderLeft: `4px solid ${color}`,
+        borderTop: selected ? "1.5px solid var(--accent-9)" : "1px solid var(--gray-6)",
+        borderRight: selected ? "1.5px solid var(--accent-9)" : "1px solid var(--gray-6)",
+        borderBottom: selected ? "1.5px solid var(--accent-9)" : "1px solid var(--gray-6)",
         boxShadow: selected ? "0 0 0 1px var(--accent-a5)" : "none",
         fontSize: 12,
         lineHeight: 1.3,
@@ -68,7 +71,7 @@ export default function ConceptNodeCard({
           width: 12,
           height: 12,
           left: -7,
-          background: "var(--accent-9)",
+          background: color,
           border: "2px solid var(--gray-1)",
         }}
       />
@@ -79,7 +82,7 @@ export default function ConceptNodeCard({
           width: 12,
           height: 12,
           right: -7,
-          background: "var(--accent-9)",
+          background: color,
           border: "2px solid var(--gray-1)",
         }}
       />

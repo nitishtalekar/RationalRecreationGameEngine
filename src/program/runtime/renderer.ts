@@ -5,10 +5,10 @@
 
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/program/runtime/types";
 import type { ActionTint, RuntimeState } from "@/program/runtime/types";
+import { colorForEntityKey } from "@/program/entityColor";
 
 const BACKGROUND = "#111318";
 const PLAYER_COLOR = "#5ec8f8";
-const ENTITY_COLOR = "#e8a13a";
 const TEXT_COLOR = "#f4f4f4";
 const FROZEN_OUTLINE = "#bfe9ff";
 
@@ -37,7 +37,7 @@ export function renderFrame(ctx: CanvasRenderingContext2D, state: RuntimeState):
       ? TINT_COLORS[entity.flashTint as ActionTint]
       : entity.isPlayer
         ? PLAYER_COLOR
-        : ENTITY_COLOR;
+        : colorForEntityKey(entity.sourceEntity.id);
 
     const radius = Math.min(entity.width, entity.height) / 2;
     const centerX = entity.position.x + entity.width / 2;

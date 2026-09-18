@@ -1,34 +1,19 @@
-// Cubic bezier control-point + point-at-t math mirroring @xyflow/system's
-// internal getBezierPath, so a label can be placed at an arbitrary point
-// along the curve instead of the library's fixed midpoint (t=0.5). Needed so
-// two edges that cross on screen don't also stack their labels on top of
-// each other (see docs/06-MICRO-RHETORICS.md follow-up: intersecting edges).
+// Curve + point-at-t math for concept-map edges. A single quadratic control
+// point is offset perpendicular to the straight line between source and
+// target, scaled by `curvature`, so:
+//   - curvature 0 draws a straight line;
+//   - a positive/negative curvature bows the edge to one side or the other
+//     of that line, regardless of node layout (horizontal, vertical, or
+//     diagonal) — unlike @xyflow/system's own getBezierPath, whose control
+//     points are offset only along each endpoint's fixed handle axis (here,
+//     always Left/Right — see ConceptNodeCard.tsx), which produces zero
+//     perpendicular offset whenever two nodes are handle-axis-aligned (e.g.
+//     the common case of two nodes in the same row).
+// This matters for A->B / B->A pairs: withFannedCurvature (ConceptGraph.tsx)
+// assigns them opposite-signed curvature so they bow to opposite sides and
+// never overlap or cross, each keeping a clear arrowhead at its own target.
 
 import { Position } from "@xyflow/react";
-
-type ControlPointParams = {
-  pos: Position;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  c: number;
-};
-
-// Same formula @xyflow/system uses: offset the control point from its own
-// endpoint, along that endpoint's handle direction, by curvature * distance.
-function getControlWithCurvature({ pos, x1, y1, x2, y2, c }: ControlPointParams): [number, number] {
-  switch (pos) {
-    case Position.Left:
-      return [x1 - c * Math.abs(x2 - x1), y1];
-    case Position.Right:
-      return [x1 + c * Math.abs(x2 - x1), y1];
-    case Position.Top:
-      return [x1, y1 - c * Math.abs(y2 - y1)];
-    case Position.Bottom:
-      return [x1, y1 + c * Math.abs(y2 - y1)];
-  }
-}
 
 export type BezierPoints = {
   sourceX: number;
@@ -40,44 +25,36 @@ export type BezierPoints = {
   curvature: number;
 };
 
-function cubicAt(p0: number, p1: number, p2: number, p3: number, t: number): number {
+function quadraticAt(p0: number, p1: number, p2: number, t: number): number {
   const mt = 1 - t;
-  return (
-    mt * mt * mt * p0 +
-    3 * mt * mt * t * p1 +
-    3 * mt * t * t * p2 +
-    t * t * t * p3
-  );
+  return mt * mt * p0 + 2 * mt * t * p1 + t * t * p2;
 }
 
 export function bezierPathAndPointAt(
   params: BezierPoints,
   t: number
 ): { path: string; x: number; y: number } {
-  const { sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, curvature } =
-    params;
+  const { sourceX, sourceY, targetX, targetY, curvature } = params;
 
-  const [cp1x, cp1y] = getControlWithCurvature({
-    pos: sourcePosition,
-    x1: sourceX,
-    y1: sourceY,
-    x2: targetX,
-    y2: targetY,
-    c: curvature,
-  });
-  const [cp2x, cp2y] = getControlWithCurvature({
-    pos: targetPosition,
-    x1: targetX,
-    y1: targetY,
-    x2: sourceX,
-    y2: sourceY,
-    c: curvature,
-  });
+  const dx = targetX - sourceX;
+  const dy = targetY - sourceY;
+  const distance = Math.hypot(dx, dy) || 1;
 
-  const path = `M${sourceX},${sourceY} C${cp1x},${cp1y} ${cp2x},${cp2y} ${targetX},${targetY}`;
+  // Unit vector perpendicular to the source->target line.
+  const perpX = -dy / distance;
+  const perpY = dx / distance;
 
-  const x = cubicAt(sourceX, cp1x, cp2x, targetX, t);
-  const y = cubicAt(sourceY, cp1y, cp2y, targetY, t);
+  const midX = (sourceX + targetX) / 2;
+  const midY = (sourceY + targetY) / 2;
+  const offset = curvature * distance;
+
+  const controlX = midX + perpX * offset;
+  const controlY = midY + perpY * offset;
+
+  const path = `M${sourceX},${sourceY} Q${controlX},${controlY} ${targetX},${targetY}`;
+
+  const x = quadraticAt(sourceX, controlX, targetX, t);
+  const y = quadraticAt(sourceY, controlY, targetY, t);
 
   return { path, x, y };
 }

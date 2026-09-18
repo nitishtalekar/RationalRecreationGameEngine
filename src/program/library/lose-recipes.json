@@ -26,6 +26,32 @@
     "instruction": null
   },
   {
+    "id": "lose-protected-entity-runs-out",
+    "category": "lose",
+    "status": "implemented",
+    "source": "manual-addition",
+    "enabled": true,
+    "predicates": [
+      {
+        "description": "X has component/tag _isHarming targeted at Y",
+        "check": "hasComponentTag",
+        "subject": "X",
+        "tag": "_isHarming",
+        "target": "Y",
+        "trueScore": 4,
+        "falseScore": 0
+      }
+    ],
+    "modifications": [
+      {
+        "type": "addComponent",
+        "owner": "Y",
+        "component": "LoseOnAllRemovedComponent"
+      }
+    ],
+    "instruction": "Don't let {Y} run out."
+  },
+  {
     "id": "lose-fail-to-protect-one-entity-from-another",
     "category": "lose",
     "status": "reference-only",

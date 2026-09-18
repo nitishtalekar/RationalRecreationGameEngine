@@ -106,6 +106,13 @@ const ParameterRangesSchema = z.record(z.string(), ParameterRangeSchema);
 const ConceptNodeSchema = z.object({
   id: z.string(),
   label: z.string(),
+  countRange: z
+    .object({
+      min: z.number().int().min(1).max(5),
+      max: z.number().int().min(1).max(5),
+    })
+    .refine((r) => r.min <= r.max, { message: "countRange.min must be <= max" })
+    .optional(),
 });
 
 const ConceptEdgeSchema = z.object({

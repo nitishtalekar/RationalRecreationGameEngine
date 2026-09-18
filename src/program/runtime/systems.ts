@@ -11,6 +11,11 @@ const SHRINK_RATE_PER_SECOND = 12;
 const GROW_RATE_PER_SECOND = 12;
 const MIN_SIZE = 6;
 const CHASE_SPEED = 90;
+// "harms" (harms-projectile-shrink): per-hit shrink amount, gentler than
+// ShrinkOnCollideComponent's SHRINK_RATE_PER_SECOND * 4 (which removes a
+// default 48px entity in a single hit) so repeated hits are visible before
+// the target disappears — a default-size entity takes ~4 hits.
+const HARMS_SHRINK_PER_HIT = 12;
 // "obstructs-freeze": how long StopOnCollideComponent removes an entity's
 // (or the player's) agency for, not spec-driven since the micro-rhetoric
 // assigns no params.
@@ -94,6 +99,18 @@ function moveToward(entity: RuntimeEntity, target: RuntimeEntity, speed: number,
   entity.position.y += (dy / distance) * speed * dt;
 }
 
+// Inverse of moveToward: steps directly away from `pursuer` instead of
+// toward it, for FleeFromComponent ("avoids" subject) — the mirror image of
+// ChaseDownComponent's approach vector.
+function moveAway(entity: RuntimeEntity, pursuer: RuntimeEntity, speed: number, dt: number) {
+  const dx = entity.position.x - pursuer.position.x;
+  const dy = entity.position.y - pursuer.position.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance < 1) return;
+  entity.position.x += (dx / distance) * speed * dt;
+  entity.position.y += (dy / distance) * speed * dt;
+}
+
 // §27 "simple autonomous movement" runtime-default for the resolved
 // `_movesInAnyWay` non-terminal (see resolve.ts's BasicMovementComponent) —
 // bounces off canvas edges at a per-entity speed drawn from
@@ -161,7 +178,15 @@ function runPlayerController(entity: RuntimeEntity, state: RuntimeState, input: 
   clampToCanvas(entity);
 }
 
+// Movement systems (this one included) never drive a player entity: direct
+// player control (runPlayerController) is the sole source of the player's
+// position, so a player who happens to hold a ChaseDownComponent/
+// FleeFromComponent/SpawnTowardTargetComponent (e.g. because a win recipe
+// made the "avoids" chaser or "harms" subject the player) does not also
+// move autonomously and fight the player's own input. Collision-triggered
+// effects (runCollisions) are unaffected by isPlayer and still apply.
 function runChaseDown(entity: RuntimeEntity, state: RuntimeState, dt: number): void {
+  if (entity.isPlayer) return;
   if (isFrozen(entity, state)) return;
   for (const c of componentsFor(entity)) {
     if (c.component !== "ChaseDownComponent") continue;
@@ -174,7 +199,27 @@ function runChaseDown(entity: RuntimeEntity, state: RuntimeState, dt: number): v
   clampToCanvas(entity);
 }
 
+// "avoids" subject: actively steps away from its pursuer every frame, rather
+// than relying on generic `_movesInAnyWay` bounce movement to accidentally
+// put distance between them. Mirrors runChaseDown's lookup convention
+// (pursuer resolved by noun, since $predicate interpolates to a noun string
+// — see microRhetoric.ts's resolveParamValue).
+function runFleeFrom(entity: RuntimeEntity, state: RuntimeState, dt: number): void {
+  if (entity.isPlayer) return;
+  if (isFrozen(entity, state)) return;
+  for (const c of componentsFor(entity)) {
+    if (c.component !== "FleeFromComponent") continue;
+    const pursuerName = typeof c.params?.pursuerName === "string" ? c.params.pursuerName : undefined;
+    const pursuer = pursuerName
+      ? state.entities.find((e) => e.noun === pursuerName && !e.removed)
+      : undefined;
+    if (pursuer) moveAway(entity, pursuer, CHASE_SPEED, dt);
+  }
+  clampToCanvas(entity);
+}
+
 function runSpawnTowardTarget(entity: RuntimeEntity, state: RuntimeState, dt: number): void {
+  if (entity.isPlayer) return;
   if (isFrozen(entity, state)) return;
   for (const c of componentsFor(entity)) {
     if (c.component !== "SpawnTowardTargetComponent") continue;
@@ -224,6 +269,25 @@ function removeEntity(entity: RuntimeEntity, state: RuntimeState, events: string
   );
   if (respawnComponent) {
     entity.respawnAt = state.elapsedSeconds + RESPAWN_DELAY_SECONDS;
+  }
+
+  // lose-protected-entity-runs-out: once every live instance sharing this
+  // spec entity is gone (count > 1 spawns several RuntimeEntity rows from
+  // one spec entity, same convention as findEntitiesBySourceId elsewhere)
+  // and none is queued to respawn, the protected entity has "run out" and
+  // the game is lost. Checked here rather than once per frame so it fires
+  // exactly on the removal that empties the last instance.
+  const loseOnAllRemoved = componentsFor(entity).find(
+    (c) => c.component === "LoseOnAllRemovedComponent"
+  );
+  if (loseOnAllRemoved && state.outcome === "playing") {
+    const allGone = findEntitiesBySourceId(state, entity.sourceEntity.id).every(
+      (e) => e.removed && e.respawnAt === null
+    );
+    if (allGone) {
+      state.outcome = "lost";
+      events.push("outcome:lost");
+    }
   }
 }
 
@@ -286,13 +350,47 @@ function runCollisions(state: RuntimeState, events: string[]): void {
           removeEntity(entity, state, events);
           break;
         }
-        case "ShrinkOnSpawnCollisionComponent": {
-          removeEntity(entity, state, events);
-          break;
-        }
         default:
           break;
       }
+    }
+  }
+
+  runHarmsShrink(state, events);
+}
+
+// "harms" (harms-projectile-shrink, docs/MASTER-SPEC.md §10.3): "A spawns a
+// shape that moves toward B; when it collides with B, B shrinks." Handled
+// separately from the generic c.target-driven loop above because the
+// paper's own published assignment for ShrinkOnSpawnCollisionComponent
+// carries no `target` field (only SpawnTowardTargetComponent, on the
+// *harmer*, names the harmed entity) — so instead of requiring the harmed
+// entity to declare its own attacker, this looks up every live entity that
+// holds a SpawnTowardTargetComponent aimed at it and treats touching any of
+// them as a hit. Each hit shrinks it (same rate as ShrinkOnCollideComponent)
+// rather than removing it outright, only removing it once fully shrunk.
+function runHarmsShrink(state: RuntimeState, events: string[]): void {
+  for (const entity of state.entities) {
+    if (entity.removed) continue;
+    const hasShrinkOnSpawnCollision = componentsFor(entity).some(
+      (c) => c.component === "ShrinkOnSpawnCollisionComponent"
+    );
+    if (!hasShrinkOnSpawnCollision) continue;
+
+    const hitByHarmer = state.entities.some((harmer) => {
+      if (harmer.removed || harmer === entity) return false;
+      const aimsAtThis = componentsFor(harmer).some(
+        (c) => c.component === "SpawnTowardTargetComponent" && c.target === entity.sourceEntity.id
+      );
+      return aimsAtThis && aabbOverlap(harmer, entity);
+    });
+    if (!hitByHarmer) continue;
+
+    entity.width = Math.max(MIN_SIZE, entity.width - HARMS_SHRINK_PER_HIT);
+    entity.height = Math.max(MIN_SIZE, entity.height - HARMS_SHRINK_PER_HIT);
+    flash(entity, "shrink", state);
+    if (entity.width <= MIN_SIZE && entity.height <= MIN_SIZE) {
+      removeEntity(entity, state, events);
     }
   }
 }
@@ -347,6 +445,7 @@ export function runSystems(
     runBasicMovement(entity, state, deltaSeconds);
     runPlayerController(entity, state, input, deltaSeconds);
     runChaseDown(entity, state, deltaSeconds);
+    runFleeFrom(entity, state, deltaSeconds);
     runSpawnTowardTarget(entity, state, deltaSeconds);
     runShrinkUnlessColliding(entity, state, deltaSeconds);
   }

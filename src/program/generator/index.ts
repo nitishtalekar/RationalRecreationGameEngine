@@ -24,6 +24,7 @@ import { applyRecipe, selectRecipe, type Binding } from "@/program/generator/rec
 import { applyPatches } from "@/program/generator/patches";
 import {
   finalizeParameters,
+  resolveEntityCounts,
   resolveNonTerminals,
   selectFallbackPlayer,
 } from "@/program/generator/resolve";
@@ -191,6 +192,7 @@ export function generateGame({
   }
 
   selectFallbackPlayer(game, rng, trace);
+  resolveEntityCounts(game, rng, trace);
 
   resolveNonTerminals(
     game,

@@ -7,7 +7,7 @@
     "conceptMap": {
       "nodes": [
         { "id": "police", "label": "Police" },
-        { "id": "occupier", "label": "Occupier" },
+        { "id": "occupier", "label": "Occupier", "countRange": { "min": 2, "max": 5 } },
         { "id": "wall-street", "label": "Wall Street" }
       ],
       "edges": [
@@ -28,6 +28,131 @@
           "source": "wall-street",
           "target": "occupier",
           "verb": "grows"
+        }
+      ]
+    }
+  },
+  {
+    "id": "predator-prey",
+    "name": "Predator and Prey",
+    "source": "paper",
+    "status": "implemented",
+    "conceptMap": {
+      "nodes": [
+        { "id": "fox", "label": "Fox" },
+        { "id": "rabbit", "label": "Rabbit", "countRange": { "min": 3, "max": 5 } }
+      ],
+      "edges": [
+        {
+          "id": "fox-arrests-rabbit",
+          "source": "fox",
+          "target": "rabbit",
+          "verb": "arrests"
+        },
+        {
+          "id": "rabbit-avoids-fox",
+          "source": "rabbit",
+          "target": "fox",
+          "verb": "avoids"
+        }
+      ]
+    }
+  },
+  {
+    "id": "castle-siege",
+    "name": "Castle Siege",
+    "source": "paper",
+    "status": "implemented",
+    "conceptMap": {
+      "nodes": [
+        { "id": "knight", "label": "Knight" },
+        { "id": "soldier", "label": "Soldier", "countRange": { "min": 4, "max": 5 } },
+        { "id": "castle", "label": "Castle" },
+        { "id": "arrow", "label": "Arrow", "countRange": { "min": 1, "max": 3 } }
+      ],
+      "edges": [
+        {
+          "id": "knight-arrests-soldier",
+          "source": "knight",
+          "target": "soldier",
+          "verb": "arrests"
+        },
+        {
+          "id": "soldier-obstructs-castle",
+          "source": "soldier",
+          "target": "castle",
+          "verb": "obstructs"
+        },
+        {
+          "id": "arrow-harms-soldier",
+          "source": "arrow",
+          "target": "soldier",
+          "verb": "harms"
+        },
+        {
+          "id": "castle-grows-soldier",
+          "source": "castle",
+          "target": "soldier",
+          "verb": "grows"
+        }
+      ]
+    }
+  },
+  {
+    "id": "single-guard",
+    "name": "Single Guard",
+    "source": "paper",
+    "status": "implemented",
+    "conceptMap": {
+      "nodes": [
+        { "id": "guard", "label": "Guard", "countRange": { "min": 1, "max": 5 } },
+        { "id": "intruder", "label": "Intruder" }
+      ],
+      "edges": [
+        {
+          "id": "guard-arrests-intruder",
+          "source": "guard",
+          "target": "intruder",
+          "verb": "arrests"
+        },
+        {
+          "id": "intruder-avoids-guard",
+          "source": "intruder",
+          "target": "guard",
+          "verb": "avoids"
+        }
+      ]
+    }
+  },
+  {
+    "id": "swarm",
+    "name": "Swarm",
+    "source": "paper",
+    "status": "implemented",
+    "conceptMap": {
+      "nodes": [
+        { "id": "diver", "label": "Diver" },
+        { "id": "jellyfish", "label": "Jellyfish", "countRange": { "min": 5, "max": 5 } },
+        { "id": "reef", "label": "Reef" }
+      ],
+      "edges": [
+        {
+          "id": "jellyfish-harms-diver",
+          "source": "jellyfish",
+          "target": "diver",
+          "verb": "harms"
+        },
+        {
+          "id": "diver-avoids-jellyfish",
+          "source": "diver",
+          "target": "jellyfish",
+          "verb": "avoids"
+        },
+        {
+          "id": "reef-obstructs-diver",
+          "source": "reef",
+          "target": "diver",
+          "verb": "obstructs"
         }
       ]
     }

@@ -5,7 +5,11 @@
     "source": "paper",
     "status": "implemented",
     "assignments": [
-      { "owner": "subject", "component": "_movesInAnyWay" },
+      {
+        "owner": "subject",
+        "component": "FleeFromComponent",
+        "params": { "pursuerName": "$predicate" }
+      },
       { "owner": "predicate", "component": "_movesInAnyWay" },
       {
         "owner": "predicate",
@@ -100,6 +104,19 @@
         "owner": "predicate",
         "target": "subject",
         "component": "GrowOnCollideComponent"
+      }
+    ]
+  },
+  {
+    "id": "wastes-shrink-on-collide",
+    "verb": "wastes",
+    "source": "manual-addition",
+    "status": "implemented",
+    "assignments": [
+      {
+        "owner": "predicate",
+        "target": "subject",
+        "component": "ShrinkOnCollideComponent"
       }
     ]
   }

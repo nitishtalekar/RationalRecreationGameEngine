@@ -45,6 +45,11 @@
     "source": "paper"
   },
   {
+    "type": "FleeFromComponent",
+    "tags": [],
+    "source": "manual-addition"
+  },
+  {
     "type": "ScoreRemovalOfComponent",
     "tags": [],
     "source": "paper"
@@ -66,12 +71,17 @@
   },
   {
     "type": "SpawnTowardTargetComponent",
-    "tags": [],
+    "tags": ["_isHarming"],
     "source": "paper"
   },
   {
     "type": "ShrinkOnSpawnCollisionComponent",
     "tags": [],
     "source": "paper"
+  },
+  {
+    "type": "LoseOnAllRemovedComponent",
+    "tags": [],
+    "source": "manual-addition"
   }
 ]

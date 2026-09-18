@@ -10,6 +10,94 @@ import type { SeededRng } from "@/program/generator/rng";
 import { COMPONENTS, NON_TERMINALS, PARAMETER_RANGES } from "@/program/generator/library";
 import type { ComponentAssignment, GameEntity, WorkingGame } from "@/program/generator/types";
 
+// Entity instance counts, generic across every noun/template: an author can
+// give any ConceptNode a `countRange` (resolve.ts's caller resolves it via
+// seeded RNG, same mechanism as finalizeParameters below, so "Try Another"
+// re-rolls counts along with everything else). Whichever entity ends up
+// `isPlayer` is forced back to a single instance regardless of what was
+// authored — a player is by definition the one thing the user controls, so
+// this rule is a property of `isPlayer`, not a hardcoded noun like "police".
+// Must run after every isPlayer assignment (recipe `setPlayer` +
+// selectFallbackPlayer) and after structure recipes' `multiplyEntity`, so
+// this is the final authority on `count` for every entity.
+export function resolveEntityCounts(
+  game: WorkingGame,
+  rng: SeededRng,
+  trace: Trace
+): void {
+  const resolved: {
+    owner: string;
+    isPlayer: boolean;
+    range: { min: number; max: number } | null;
+    count: number;
+    reason: string;
+  }[] = [];
+
+  for (const entity of game.entities) {
+    const node = game.conceptMap.nodes.find((n) => n.id === entity.id);
+    const range = node?.countRange ?? null;
+
+    if (entity.isPlayer) {
+      entity.count = 1;
+      resolved.push({
+        owner: entity.noun,
+        isPlayer: true,
+        range,
+        count: 1,
+        reason: "player entities are always a single controlled instance",
+      });
+      continue;
+    }
+
+    if (entity.count !== undefined) {
+      // A structure recipe (e.g. multiplyEntity) already assigned a fixed
+      // count — more specific than an authored template range, so it wins.
+      resolved.push({
+        owner: entity.noun,
+        isPlayer: false,
+        range,
+        count: entity.count,
+        reason: "already set by a structure recipe",
+      });
+    } else if (range) {
+      const count = range.min === range.max ? range.min : rng.int(range.min, range.max);
+      entity.count = count;
+      resolved.push({
+        owner: entity.noun,
+        isPlayer: false,
+        range,
+        count,
+        reason:
+          range.min === range.max
+            ? "fixed count (min == max), no RNG call"
+            : "seeded random choice within authored range",
+      });
+    } else {
+      resolved.push({
+        owner: entity.noun,
+        isPlayer: false,
+        range: null,
+        count: 1,
+        reason: "default: no countRange authored",
+      });
+    }
+  }
+
+  trace.capture("entity-counts", {
+    name: "STEP 9B — ENTITY INSTANCE COUNTS",
+    calculations: resolved.map((r) => ({
+      owner: r.owner,
+      isPlayer: r.isPlayer,
+      authoredRange: r.range ? `[${r.range.min}, ${r.range.max}]` : "none",
+    })),
+    selected: resolved.map((r) => ({
+      owner: r.owner,
+      count: r.count,
+      reason: r.reason,
+    })),
+  });
+}
+
 export function selectFallbackPlayer(
   game: WorkingGame,
   rng: SeededRng,

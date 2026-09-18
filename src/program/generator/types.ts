@@ -4,6 +4,13 @@
 export type ConceptNode = {
   id: string;
   label: string;
+  // Author-specified instance-count range for this noun, resolved via seeded
+  // RNG at generation time (resolve.ts's resolveEntityCounts). Omitted means
+  // a single instance. Ignored for whichever entity ends up `isPlayer` —
+  // the player is always exactly one instance regardless of this range, so
+  // a "police" noun stays a single controllable entity even if authored with
+  // a range, while a non-player noun like "occupier" can vary run to run.
+  countRange?: { min: number; max: number };
 };
 
 export type ConceptEdge = {

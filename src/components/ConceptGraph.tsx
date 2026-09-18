@@ -11,6 +11,7 @@ import {
   applyEdgeChanges,
   addEdge,
   useReactFlow,
+  MarkerType,
   type NodeChange,
   type EdgeChange,
   type Connection,
@@ -59,6 +60,10 @@ function nextEdgeId() {
 const GRID_SPACING_X = 260;
 const GRID_SPACING_Y = 160;
 
+// Every edge is directional (verbs read subject -> predicate), so every edge
+// gets a closed arrowhead at the target end.
+const EDGE_MARKER_END = { type: MarkerType.ArrowClosed, width: 18, height: 18 };
+
 function layoutNodes(
   nodes: { id: string; label: string }[]
 ): ConceptFlowNode[] {
@@ -91,6 +96,18 @@ function hashUnitOffset(id: string): number {
 // slightly different position along its own curve (labelT, near but not
 // exactly the midpoint) so labels on edges that cross on screen don't render
 // at the same point.
+//
+// A same-pair fan (above) only separates A->B from B->A. It does nothing for
+// the "A-B-A" case -- e.g. police->occupier and wall-street->occupier both
+// end at occupier but belong to different (unrelated) node pairs, so the
+// same-pair grouping treats them independently and their independently
+// hashed labelT values can still coincide near the shared node. To fix that
+// generically (for any node with 2+ distinct edges touching it, not just
+// this one template), edges are also grouped per endpoint they touch, and
+// each edge's slot index within every group it belongs to nudges its labelT
+// away from the other edges sharing that node -- so labels cluster less near
+// shared vertices regardless of which two (or more) nouns happen to connect
+// there.
 function withFannedCurvature<T extends { id: string; source: string; target: string }>(
   edges: T[]
 ): (T & { curvature: number; labelT: number })[] {
@@ -102,22 +119,67 @@ function withFannedCurvature<T extends { id: string; source: string; target: str
     pairGroups.set(key, group);
   }
 
+  // bezierPathAndPointAt's perpendicular offset is computed from each edge's
+  // own source->target vector, so a positive curvature bows to that vector's
+  // "left" regardless of which node happens to be the source. For an A->B /
+  // B->A pair that means the two edges bow to opposite *geometric* sides
+  // only if their curvature signs are flipped relative to each other in a
+  // way that accounts for their reversed direction — otherwise (e.g. two
+  // edges both slotted "offset > 0" by iteration order alone) they can bow
+  // to the same visual side and still overlap. Canonicalizing the sign
+  // against the sorted pair order fixes that: every edge's curvature is
+  // computed as if walking from the alphabetically-first node to the
+  // alphabetically-last node, then negated when this edge's actual source
+  // is the alphabetically-last one, so opposite-direction edges reliably
+  // land on opposite sides no matter how nodes are laid out on screen.
   const curvatureByEdge = new Map<T, number>();
   for (const group of pairGroups.values()) {
     const step = 0.5;
+    const [canonicalFirst] = [group[0].source, group[0].target].sort();
     group.forEach((edge, i) => {
       const offset = i - (group.length - 1) / 2;
-      curvatureByEdge.set(edge, offset * step);
+      const sign = edge.source === canonicalFirst ? 1 : -1;
+      curvatureByEdge.set(edge, offset * step * sign);
     });
   }
 
-  return edges.map((edge) => ({
-    ...edge,
-    curvature: curvatureByEdge.get(edge) ?? 0,
-    // Spread labels across the middle 40% of each curve (0.3-0.7) instead of
-    // pinning every label to the exact midpoint (0.5).
-    labelT: 0.3 + hashUnitOffset(edge.id) * 0.4,
-  }));
+  // Every node's incident edges (as source or target), in insertion order,
+  // so each edge can look up its own slot among edges sharing either of its
+  // endpoints.
+  const edgesByNode = new Map<string, T[]>();
+  for (const edge of edges) {
+    for (const nodeId of [edge.source, edge.target]) {
+      const group = edgesByNode.get(nodeId) ?? [];
+      group.push(edge);
+      edgesByNode.set(nodeId, group);
+    }
+  }
+
+  return edges.map((edge) => {
+    const sourceGroup = edgesByNode.get(edge.source)!;
+    const targetGroup = edgesByNode.get(edge.target)!;
+    // Combine both endpoints' cluster sizes/slots into one deterministic
+    // offset: an edge whose endpoints are each shared by several other
+    // edges gets pushed further from the crowded default (0.5) than one
+    // whose endpoints are otherwise unconnected.
+    const sourceSlot = sourceGroup.indexOf(edge) / sourceGroup.length;
+    const targetSlot = targetGroup.indexOf(edge) / targetGroup.length;
+    const clusterOffset = (sourceSlot + targetSlot) / 2 - 0.5; // roughly [-0.5, 0.5)
+
+    return {
+      ...edge,
+      curvature: curvatureByEdge.get(edge) ?? 0,
+      // Spread labels across the middle 60% of each curve (0.2-0.8), biased
+      // by clusterOffset so edges converging on a busy node land at visibly
+      // different points along their curves instead of clumping at the
+      // curve's midpoint. hashUnitOffset still breaks ties between edges
+      // that land in the same cluster slot.
+      labelT: Math.min(
+        0.8,
+        Math.max(0.2, 0.5 + clusterOffset * 0.5 + (hashUnitOffset(edge.id) - 0.5) * 0.15)
+      ),
+    };
+  });
 }
 
 function conceptMapToFlow(map: ConceptMap): {
@@ -131,6 +193,7 @@ function conceptMapToFlow(map: ConceptMap): {
       type: "conceptEdge",
       source: e.source,
       target: e.target,
+      markerEnd: EDGE_MARKER_END,
       data: { verb: e.verb, curvature: e.curvature, labelT: e.labelT },
     })),
   };
@@ -226,6 +289,7 @@ function ConceptGraphInner({
           ...connection,
           id: nextEdgeId(),
           type: "conceptEdge",
+          markerEnd: EDGE_MARKER_END,
           data: { verb: "arrests" },
         },
         eds
@@ -363,7 +427,6 @@ function ConceptGraphInner({
           fitViewOptions={{ padding: 0.3 }}
           minZoom={0.3}
           maxZoom={2}
-          proOptions={{ hideAttribution: true }}
           colorMode="dark"
         >
           <Background gap={16} size={1} />
