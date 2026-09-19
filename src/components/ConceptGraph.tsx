@@ -17,7 +17,6 @@ import {
   type Connection,
   type NodeTypes,
   type EdgeTypes,
-  type EdgeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import {
@@ -37,6 +36,7 @@ import ConceptNodeCard, {
 } from "@/components/graph/ConceptNodeCard";
 import ConceptEdgeLabel, {
   type ConceptFlowEdge,
+  type ConceptFlowRenderEdge,
 } from "@/components/graph/ConceptEdgeLabel";
 import {
   IMPLEMENTED_VERBS,
@@ -44,6 +44,12 @@ import {
 } from "@/components/graph/validateConceptMap";
 
 const nodeTypes: NodeTypes = { conceptNode: ConceptNodeCard };
+// Stable, module-level object (never recreated) — React Flow warns (error
+// #002) if nodeTypes/edgeTypes changes identity across renders. The per-edge
+// callbacks/flags that used to be injected as extra component props via an
+// inline useMemo-wrapped wrapper now live on each edge's own `data` instead
+// (see ConceptFlowEdgeData), so this can be a plain constant.
+const edgeTypes: EdgeTypes = { conceptEdge: ConceptEdgeLabel };
 
 let nodeIdCounter = 0;
 function nextNodeId() {
@@ -259,20 +265,27 @@ function ConceptGraphInner({
     });
   }, []);
 
-  const edgeTypes: EdgeTypes = useMemo(
-    () => ({
-      conceptEdge: (props: EdgeProps<ConceptFlowEdge>) => (
-        <ConceptEdgeLabel
-          {...props}
-          onVerbChange={changeEdgeVerb}
-          onDelete={deleteEdge}
-          showUnsupported={showUnsupported}
-          implementedVerbs={IMPLEMENTED_VERBS}
-        />
-      ),
-    }),
-    [changeEdgeVerb, deleteEdge, showUnsupported]
-  ) as EdgeTypes;
+  // The rendered edges' `data` carries onVerbChange/onDelete/showUnsupported/
+  // implementedVerbs (see ConceptFlowEdgeData) so edgeTypes itself can stay a
+  // stable module-level object instead of an inline-wrapped component
+  // recreated whenever these change (React Flow error #002). changeEdgeVerb/
+  // deleteEdge are already stable (useCallback with no deps) and
+  // IMPLEMENTED_VERBS is a module-level constant, so only showUnsupported
+  // actually varies this across renders.
+  const renderedEdges: ConceptFlowRenderEdge[] = useMemo(
+    () =>
+      edges.map((e) => ({
+        ...e,
+        data: {
+          ...e.data!,
+          onVerbChange: changeEdgeVerb,
+          onDelete: deleteEdge,
+          showUnsupported,
+          implementedVerbs: IMPLEMENTED_VERBS,
+        },
+      })),
+    [edges, changeEdgeVerb, deleteEdge, showUnsupported]
+  );
 
   const onNodesChange = useCallback((changes: NodeChange<ConceptFlowNode>[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));
@@ -415,9 +428,9 @@ function ConceptGraphInner({
           overflow: "hidden",
         }}
       >
-        <ReactFlow<ConceptFlowNode, ConceptFlowEdge>
+        <ReactFlow<ConceptFlowNode, ConceptFlowRenderEdge>
           nodes={nodes}
-          edges={edges}
+          edges={renderedEdges}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodesChange={onNodesChange}
